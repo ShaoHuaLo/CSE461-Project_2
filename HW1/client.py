@@ -68,8 +68,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
 		message = struct.pack('!IIHHI' + str(len2) + 's', len2 + 4, secretC, step, student_id, packet_id, payload)
 		data = struct.unpack('!IIHHI' + str(len2) + 's', message)
 		print(data)
-
-		s.sendto(message, ('attu3.cs.washington.edu', tcp_port))
+		# since this is tcp I am not sure if we need to worry about timeout.
+		s.sendall(message)
 	# Keep running into an issue that there are too many values to unpack
 	response, _ = s.recv(16)
 	payload_len, p_secret, step, student_id, secretD = struct.unpack('!IIHHI', response)
