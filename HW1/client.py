@@ -64,13 +64,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
 	s_char = struct.pack('s', c)
 	payload = ''.ljust(len2, chr(s_char[0]))
 	payload = bytes(payload, 'utf-8')
-	packet_id = 0
-	for i in range(num2):
+	for packet_id in range(num2):
 		message = struct.pack('!IIHHI' + str(len2) + 's', len2 + 4, secretC, step, student_id, packet_id, payload)
 		data = struct.unpack('!IIHHI' + str(len2) + 's', message)
 		print(data)
 
-		s.sendto(message, ('attu3.cs.washington.edu', udp_port))
+		s.sendto(message, ('attu3.cs.washington.edu', tcp_port))
 	# Keep running into an issue that there are too many values to unpack
 	response, _ = s.recv(16)
 	payload_len, p_secret, step, student_id, secretD = struct.unpack('!IIHHI', response)
