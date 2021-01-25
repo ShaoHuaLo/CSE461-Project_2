@@ -5,8 +5,8 @@ import struct
 STEP = 1
 STUDENT_ID = 972
 
-# SERVER_NAME = "attu2.cs.washington.edu"
-SERVER_NAME = "localhost" # for testing
+SERVER_NAME = "attu2.cs.washington.edu"
+# SERVER_NAME = "localhost" # for testing
 PORT = 12235
 HEADER_LEN = 12
 BUFFER_SIZE = 1024
@@ -100,12 +100,11 @@ def stage_C_D(tcp_port, secretB):
         return
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as my_tcp_socket:
         # step c1
-        print(tcp_port)
         my_tcp_socket.connect((SERVER_NAME, tcp_port))
         # step c2
         packet_recv = my_tcp_socket.recv(BUFFER_SIZE)
         _, num2, len2, secretC, c, _ = struct.unpack('! 12s 3I c 3s', packet_recv)
-        print("Secret C:", secretC)
+        print("Secret C: ", secretC)
 
         # step d1
         payload_before_padding = c * len2
