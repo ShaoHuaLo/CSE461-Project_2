@@ -13,7 +13,7 @@ secret D:  25
 We used Python 3.9.1 \
 To run the client code all you need to do is run: 
 ```
-python client.py
+python3 client.py
 ```
 If you want to change the server name or port, the clients connects to, simply update the PORT and SERVER_NAME variables 
 on the top of client.py to the intended locations.

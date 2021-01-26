@@ -178,6 +178,7 @@ def threaded(packet_recv, addr_client, sock):
     # step b
     socket_b = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     socket_b.bind((SERVER_NAME, udp_port))
+    socket_b.settimeout(3)
 
     id = 0
     while id < num:

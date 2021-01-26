@@ -9,7 +9,7 @@ Shao-Hua Lo,        netID: shl0905
 We used Python 3.9.1 \
 To run the server code all you need to do is run: 
 ```
-python Server.py
+python3 Server.py
 ```
 If you want to change the server name or port, simply update the PORT and SERVER_NAME variables 
 on the top of Server.py to the intended locations.
