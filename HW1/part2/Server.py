@@ -7,8 +7,7 @@ import _thread
 STEP = 2
 STUDENT_ID = 972
 
-# SERVER_NAME = "attu2.cs.washington.edu"
-SERVER_NAME = "localhost" # testing
+SERVER_NAME = "attu2.cs.washington.edu"
 PORT_START = 12235
 
 HEADER_LEN = 12

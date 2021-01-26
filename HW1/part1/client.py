@@ -6,7 +6,6 @@ STEP = 1
 STUDENT_ID = 972
 
 SERVER_NAME = "attu2.cs.washington.edu"
-# SERVER_NAME = "localhost" # for testing
 PORT = 12235
 HEADER_LEN = 12
 BUFFER_SIZE = 1024
