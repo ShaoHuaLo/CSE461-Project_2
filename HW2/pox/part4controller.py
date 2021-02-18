@@ -77,11 +77,11 @@ class Part3Controller (object):
 
   def s1_setup(self):
     #put switch 1 rules here
-    msg_s1 = of.ofp_flow_mod(match = of.ofp_match(nw_src = IPS["hnotrust"][0], 
-                                                  dl_type = 0x0800, 
+    msg_s1 = of.ofp_flow_mod(match = of.ofp_match(nw_src = IPS["hnotrust"][0],
+                                                  dl_type = 0x0800,
                                                   nw_proto = 1),
                               priority = 100)
-    msg_flood = of.ofp_flow_mod(action = of.ofp_action_output(port = of.OFPP_FLOOD), 
+    msg_flood = of.ofp_flow_mod(action = of.ofp_action_output(port = of.OFPP_FLOOD),
                                 priority = 50)
 
     self.connection.send(msg_s1)
@@ -94,7 +94,7 @@ class Part3Controller (object):
                                                   dl_type = 0x0800,
                                                   nw_proto = 1),
                               priority = 100)
-    msg_flood = of.ofp_flow_mod(action = of.ofp_action_output(port = of.OFPP_FLOOD), 
+    msg_flood = of.ofp_flow_mod(action = of.ofp_action_output(port = of.OFPP_FLOOD),
                                 priority = 50)
 
     self.connection.send(msg_s2)
@@ -107,7 +107,7 @@ class Part3Controller (object):
                                                   dl_type = 0x0800,
                                                   nw_proto = 1),
                               priority = 100)
-    msg_flood = of.ofp_flow_mod(action = of.ofp_action_output(port = of.OFPP_FLOOD), 
+    msg_flood = of.ofp_flow_mod(action = of.ofp_action_output(port = of.OFPP_FLOOD),
                                 priority = 50)
     self.connection.send(msg_s3)
     self.connection.send(msg_flood)
@@ -116,7 +116,7 @@ class Part3Controller (object):
   def cores21_setup(self):
     #put core switch rules here
     
-    # may need to remove these individual rule!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    may need to remove these individual rule!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     msg_cores1 = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = IPS["h10"][0]),
                                   action = of.ofp_action_output(port = 1),
                                   priority = 100)
@@ -139,7 +139,7 @@ class Part3Controller (object):
     self.connection.send(msg_cores4)
     self.connection.send(msg_cores5)
 
-    msg_arp = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0806), 
+    msg_arp = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0806),
                               action = of.ofp_action_output(port = of.OFPP_CONTROLLER),
                               priority = 100)
     msg_ip = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800),
@@ -157,7 +157,7 @@ class Part3Controller (object):
     #put datacenter switch rules here
     msg_dcs31 = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_src = IPS["hnotrust"][0]),
                               priority = 100)
-    msg_flood = of.ofp_flow_mod(action = of.ofp_action_output(port = of.OFPP_FLOOD), 
+    msg_flood = of.ofp_flow_mod(action = of.ofp_action_output(port = of.OFPP_FLOOD),
                                 priority = 50)
     self.connection.send(msg_dcs31)
     self.connection.send(msg_flood)
@@ -254,10 +254,26 @@ class Part3Controller (object):
     
     elif isinstance(packet.next, ipv4):
         print("ippacket reved.....")
-        # TODO: 
+        # TODO:
+        a = packet.next
+        print("packet a dest,", a.dstip)
+        print("packet a src,", a.srcip)
+        print("arp table ", arpTable)
+        if a.dstip in arpTable:
+            print("Forwarding")
+            tableDst = arpTable[a.dstip]
+            print("dst info ", tableDst)
+            print("original dst", a.dstip)
+            a.dstip = tableDst[1]
+            # e = ethernet(type=packet.type, src=dpid_to_mac(dpid), dst=a.dstip)
+            # e.set_payload(a.pack())
+            # msg = of.ofp_packet_out()
+            # msg.data = e.pack()
+            # msg.actions.append(of.ofp_action_output(port = tableDst[0]))
+            # msg.in_port = inport
+            # event.connection.send(msg)
+   
         return
-
-
 
 
     packet_in = event.ofp # The actual ofp_packet_in message.
