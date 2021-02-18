@@ -165,15 +165,17 @@ class Part3Controller (object):
     if not packet.parsed:
       log.warning("Ignoring incomplete packet")
       return
+    src_ip = cur_packet.protosrc if isinstance(cur_packet, arp) else cur_packet.srcip
 
+    if src_ip not in arpTable or arpTable[src_ip] != inport:
+      arpTable[src_ip] = inport
+      msg_cores = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = src_ip),
+                              action = of.ofp_action_output(port = inport),
+                              priority = 100)
+      self.connection.send(msg_cores)
 
     if isinstance(cur_packet, arp):
       a = cur_packet
-      if a.protosrc not in arpTable:
-        msg_cores = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = a.protosrc),
-                                action = of.ofp_action_output(port = inport),
-                                priority = 100)
-        self.connection.send(msg_cores)
       print("arp recved.......")
 
       print("proto src", a.protosrc)
@@ -181,9 +183,6 @@ class Part3Controller (object):
         if a.hwtype == arp.HW_TYPE_ETHERNET:
           if a.protosrc != 0:
 
-            src_ip = a.protosrc
-            target_ip = a.protodst
-            arpTable[src_ip] = inport
 
             if a.opcode == arp.REQUEST:
               print("table: ", arpTable, "protodst: ", a.protodst)
