@@ -23,7 +23,7 @@ class Firewall (object):
     connection.addListeners(self)
 
     #add switch rules here
-   
+
     msg_icmp = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_proto = 1),
                                 action = of.ofp_action_output(port = of.OFPP_FLOOD),
                                 priority = 100)
