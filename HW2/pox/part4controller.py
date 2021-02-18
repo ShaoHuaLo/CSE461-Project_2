@@ -115,29 +115,6 @@ class Part3Controller (object):
 
   def cores21_setup(self):
     #put core switch rules here
-    
-    may need to remove these individual rule!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    msg_cores1 = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = IPS["h10"][0]),
-                                  action = of.ofp_action_output(port = 1),
-                                  priority = 100)
-    msg_cores2 = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = IPS["h20"][0]),
-                                  action = of.ofp_action_output(port = 2),
-                                  priority = 100)
-    msg_cores3 = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = IPS["h30"][0]),
-                                  action = of.ofp_action_output(port = 3),
-                                  priority = 100)
-    msg_cores4 = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = IPS["serv1"][0]),
-                                  action = of.ofp_action_output(port = 4),
-                                  priority = 100)
-    msg_cores5 = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = IPS["hnotrust"][0]),
-                                  action = of.ofp_action_output(port = 5),
-                                  priority = 100)
-    
-    self.connection.send(msg_cores1)
-    self.connection.send(msg_cores2)
-    self.connection.send(msg_cores3)
-    self.connection.send(msg_cores4)
-    self.connection.send(msg_cores5)
 
     msg_arp = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0806),
                               action = of.ofp_action_output(port = of.OFPP_CONTROLLER),
@@ -179,25 +156,34 @@ class Part3Controller (object):
     Packets not handled by the router rules will be
     forwarded to this method to be handled by the controller
     """
-    
+
     packet = event.parsed # This is the parsed packet data.
     dpid = event.dpid
     inport = event.port
+    cur_packet = packet.next
+
     if not packet.parsed:
       log.warning("Ignoring incomplete packet")
       return
 
-    if isinstance(packet.next, arp):
-      print("arp recved.......")
-      a = packet.next
 
+    if isinstance(cur_packet, arp):
+      a = cur_packet
+      if a.protosrc not in arpTable:
+        msg_cores = of.ofp_flow_mod(match = of.ofp_match(dl_type = 0x0800, nw_dst = a.protosrc),
+                                action = of.ofp_action_output(port = inport),
+                                priority = 100)
+        self.connection.send(msg_cores)
+      print("arp recved.......")
+
+      print("proto src", a.protosrc)
       if a.prototype == arp.PROTO_TYPE_IP:
         if a.hwtype == arp.HW_TYPE_ETHERNET:
           if a.protosrc != 0:
-            
+
             src_ip = a.protosrc
             target_ip = a.protodst
-            arpTable[src_ip] = (inport, target_ip)
+            arpTable[src_ip] = inport
 
             if a.opcode == arp.REQUEST:
               print("table: ", arpTable, "protodst: ", a.protodst)
@@ -225,54 +211,28 @@ class Part3Controller (object):
                 msg.in_port = inport
                 event.connection.send(msg)
                 return
-            # arpTable[a.protosrc] = Entry(inport, packet.src)
-            # if a.opcode == arp.REQUEST:
-            #   print("Dict: ", arpTable, " next protodst: ", a.protodst)
-              
-            #   if a.protodst in arpTable:
-            #     print("composing ARP reply...............")
-            #     r = arp()
-            #     r.hwtype = a.hwtype
-            #     r.prototype = a.prototype
-            #     r.hwlen = a.hwlen
-            #     r.protolen = a.protolen
-            #     r.opcode = arp.REPLY
-            #     r.hwdst = a.hwsrc
-            #     r.protodst = a.protosrc
-            #     r.protosrc = a.protodst
-            #     r.hwsrc = arpTable[a.protodst].mac
-            #     e = ethernet(type=packet.type, src=dpid_to_mac(dpid), dst=a.hwsrc)
-            #     e.set_payload(r)
 
-            #     msg = of.ofp_packet_out()
-            #     msg.data = e.pack()
-            #     msg.actions.append(of.ofp_action_output(port = of.OFPP_IN_PORT))
-            #     msg.in_port = inport
-            #     event.connection.send(msg)
-            #     return
-
-    
-    elif isinstance(packet.next, ipv4):
+    elif isinstance(cur_packet, ipv4):
         print("ippacket reved.....")
         # TODO:
-        a = packet.next
-        print("packet a dest,", a.dstip)
-        print("packet a src,", a.srcip)
+        a = cur_packet
+        print("ip src ", a.srcip)
+
         print("arp table ", arpTable)
         if a.dstip in arpTable:
             print("Forwarding")
             tableDst = arpTable[a.dstip]
             print("dst info ", tableDst)
             print("original dst", a.dstip)
-            a.dstip = tableDst[1]
-            # e = ethernet(type=packet.type, src=dpid_to_mac(dpid), dst=a.dstip)
-            # e.set_payload(a.pack())
-            # msg = of.ofp_packet_out()
-            # msg.data = e.pack()
-            # msg.actions.append(of.ofp_action_output(port = tableDst[0]))
-            # msg.in_port = inport
-            # event.connection.send(msg)
-   
+
+            e = ethernet(type=packet.type, src=str(a.srcip), dst=str(a.dstip))
+            e.set_payload(a)
+            msg = of.ofp_packet_out()
+            msg.data = e.pack()
+            msg.actions.append(of.ofp_action_output(port = tableDst))
+            msg.in_port = inport
+            event.connection.send(msg)
+
         return
 
 
