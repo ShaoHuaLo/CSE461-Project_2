@@ -15,7 +15,7 @@ for qsize in 20 100; do
     dir=bb-q$qsize
 
     # TODO: Run bufferbloat.py here...
-    python3 bufferbloat.py -d $dir/output.txt -b $bwnet --delay $delay
+    python3 bufferbloat.py -d $dir -b $bwnet --delay $delay
 
     # TODO: Ensure the input file names match the ones you use in
     # bufferbloat.py script.  Also ensure the plot file names match

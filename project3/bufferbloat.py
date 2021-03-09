@@ -77,9 +77,9 @@ class BBTopo(Topo):
 
         # TODO: Add links with appropriate characteristics
         # TODO change 5ms to argument --delay
-        self.addLink('h1', 's1', bw=1000, delay='5ms',
+        self.addLink('h1', 's0', bw=1000, delay='5ms',
                           max_queue_size=100)
-        self.addLink('s1', 'h1', bw=1.5, delay='5ms',
+        self.addLink('s0', 'h2', bw=1.5, delay='5ms',
                           max_queue_size=100)
 
 
@@ -97,8 +97,8 @@ def start_iperf(net):
     # TODO: Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow.
     h1 = net.get('h1')
-    server2 = h1.popen("iperf -s -w 16m")
-    net.iperf(hosts = (server, server2), l4Type = 'TCP', seconds = 9999999)
+    server2 = h1.popen("iperf -c")
+    net.iperf(hosts = (h1, h2), l4Type = 'TCP', seconds = 5)
 
 
 def start_qmon(iface, interval_sec=0.1, outfile="q.txt"):
@@ -117,8 +117,8 @@ def start_ping(net):
     # i.e. ping ... > /path/to/ping.
     h1 = net.get('h1')
     h2 = net.get('h2')
-    cmd = 'ping -i 0.1 > ./temp.txt'
-    h1.popen(cmd, h2, shell=True)
+    cmd = 'ping -i 0.1 > ' + args.dir + '/ping.txt'
+    h1.popen(cmd, h2.IP(), shell=True)
 
 def start_webserver(net):
     h1 = net.get('h1')
