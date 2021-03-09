@@ -76,6 +76,7 @@ class BBTopo(Topo):
         switch = self.addSwitch('s0')
 
         # TODO: Add links with appropriate characteristics
+        # TODO change 5ms to argument --delay
         self.addLink('h1', 's1', bw=1000, delay='5ms',
                           max_queue_size=100)
         self.addLink('s1', 'h1', bw=1.5, delay='5ms',
@@ -118,7 +119,6 @@ def start_ping(net):
     h2 = net.get('h2')
     cmd = 'ping -i 0.1 > ./temp.txt'
     h1.popen(cmd, h2, shell=True)
-    pass
 
 def start_webserver(net):
     h1 = net.get('h1')
@@ -152,8 +152,9 @@ def bufferbloat():
                       outfile='%s/q.txt' % (args.dir))
 
     # TODO: Start iperf, webservers, etc.
-    # start_iperf(net)
-
+    start_iperf(net)
+    start_ping(net)
+    # start_webserver(net)
     # TODO: measure the time it takes to complete webpage transfer
     # from h1 to h2 (say) 3 times.  Hint: check what the following
     # command does: curl -o /dev/null -s -w %{time_total} google.com
