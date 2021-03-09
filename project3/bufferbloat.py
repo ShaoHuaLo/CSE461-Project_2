@@ -68,12 +68,19 @@ class BBTopo(Topo):
 
     def build(self, n=2):
         # TODO: create two hosts
+        h1 = self.addHost('h1')
+        h2 = self.addHost('h2')
 
         # Here I have created a switch.  If you change its name, its
         # interface names will change from s0-eth1 to newname-eth1.
         switch = self.addSwitch('s0')
 
         # TODO: Add links with appropriate characteristics
+        self.addLink('h1', 's1', bw=1000, delay='5ms',
+                          max_queue_size=100)
+        self.addLink('s1', 'h1', bw=1.5, delay='5ms',
+                          max_queue_size=100)
+
 
 # Simple wrappers around monitoring utilities.  You are welcome to
 # contribute neatly written (using classes) monitoring scripts for
@@ -88,6 +95,10 @@ def start_iperf(net):
     server = h2.popen("iperf -s -w 16m")
     # TODO: Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow.
+    h1 = net.get('h1')
+    server2 = h1.popen("iperf -s -w 16m")
+    net.iperf(hosts = (server, server2), l4Type = 'TCP', seconds = 9999999)
+
 
 def start_qmon(iface, interval_sec=0.1, outfile="q.txt"):
     monitor = Process(target=monitor_qlen,
@@ -103,6 +114,10 @@ def start_ping(net):
     # Hint: Use host.popen(cmd, shell=True).  If you pass shell=True
     # to popen, you can redirect cmd's output using shell syntax.
     # i.e. ping ... > /path/to/ping.
+    h1 = net.get('h1')
+    h2 = net.get('h2')
+    cmd = 'ping -i 0.1 > ./temp.txt'
+    h1.popen(cmd, h2, shell=True)
     pass
 
 def start_webserver(net):
