@@ -15,12 +15,13 @@ for qsize in 20 100; do
     dir=bb-q$qsize
 
     # TODO: Run bufferbloat.py here...
-    python3 bufferbloat.py -d $dir -b $bwnet --delay $delay
+    # python3 ...
+    python3 bufferbloat.py --dir=$dir --time=$time --bw-net=$bwnet --delay=$delay --maxq=$qsize
 
     # TODO: Ensure the input file names match the ones you use in
     # bufferbloat.py script.  Also ensure the plot file names match
     # the required naming convention when submitting your tarball.
-    python3 plot_tcpprobe.py -f $dir/cwnd.txt -o $dir/cwnd-iperf.png -p $iperf_port
+    # python3 plot_tcpprobe.py -f $dir/cwnd.txt -o $dir/cwnd-iperf.png -p $iperf_port
     python3 plot_queue.py -f $dir/q.txt -o $dir/q.png
     python3 plot_ping.py -f $dir/ping.txt -o $dir/rtt.png
 done

@@ -12,6 +12,8 @@ from multiprocessing import Process
 from argparse import ArgumentParser
 
 from monitor import monitor_qlen
+from statistics import stdev
+from statistics import mean
 
 import sys
 import os
@@ -67,20 +69,24 @@ class BBTopo(Topo):
     "Simple topology for bufferbloat experiment."
 
     def build(self, n=2):
+        
         # TODO: create two hosts
-        h1 = self.addHost('h1')
-        h2 = self.addHost('h2')
+        host_1 = self.addHost( 'h1' )
+        host_2 = self.addHost( 'h2' )
 
         # Here I have created a switch.  If you change its name, its
         # interface names will change from s0-eth1 to newname-eth1.
         switch = self.addSwitch('s0')
-
+        
         # TODO: Add links with appropriate characteristics
-        # TODO change 5ms to argument --delay
-        self.addLink('h1', 's0', bw=1000, delay='5ms',
-                          max_queue_size=100)
-        self.addLink('s0', 'h2', bw=1.5, delay='5ms',
-                          max_queue_size=100)
+        self.addLink(host_1, switch, 
+                        bw = 1000, 
+                        delay = '%sms' % args.delay,
+                        max_queue_size = args.maxq)
+        self.addLink(host_2, switch, 
+                        bw = 1.5, 
+                        delay = '%sms' % args.delay, 
+                        max_queue_size = args.maxq)
 
 
 # Simple wrappers around monitoring utilities.  You are welcome to
@@ -94,11 +100,12 @@ def start_iperf(net):
     # that the TCP flow is not receiver window limited.  If it is,
     # there is a chance that the router buffer may not get filled up.
     server = h2.popen("iperf -s -w 16m")
+    
     # TODO: Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow.
     h1 = net.get('h1')
-    server2 = h1.popen("iperf -c")
-    net.iperf(hosts = (h1, h2), l4Type = 'TCP', seconds = 5)
+    client = h1.popen("iperf -c %s -t 99999999" % h2.IP())
+
 
 
 def start_qmon(iface, interval_sec=0.1, outfile="q.txt"):
@@ -117,14 +124,27 @@ def start_ping(net):
     # i.e. ping ... > /path/to/ping.
     h1 = net.get('h1')
     h2 = net.get('h2')
-    cmd = 'ping -i 0.1 > ' + args.dir + '/ping.txt'
-    h1.popen(cmd, h2.IP(), shell=True)
+    popen = h1.popen('ping -c 10 -i 0.1 %s > %s/ping.txt' % (h2.IP(), args.dir), shell = True)
+    popen.communicate()
+
 
 def start_webserver(net):
     h1 = net.get('h1')
     proc = h1.popen("python http/webserver.py", shell=True)
     sleep(1)
     return [proc]
+
+
+def get_time_avg(net, h1, h2):
+    times = []
+    for i in range(3):
+        fetch = "curl -o /dev/null -s -w %{time_total} " + h1.IP() + "/http/index.html"
+        time = h2.popen(fetch).communicate()[0]
+        times.append(float(time))
+
+    return mean(times)
+
+
 
 def bufferbloat():
     if args.http3:
@@ -143,32 +163,45 @@ def bufferbloat():
     # This performs a basic all pairs ping test.
     net.pingAll()
 
+    
     # TODO: Start monitoring the queue sizes.  Since the switch I
     # created is "s0", I monitor one of the interfaces.  Which
     # interface?  The interface numbering starts with 1 and increases.
     # Depending on the order you add links to your network, this
     # number may be 1 or 2.  Ensure you use the correct number.
     qmon = start_qmon(iface='s0-eth2',
-                      outfile='%s/q.txt' % (args.dir))
+                      outfile='%s/q.txt' % args.dir)
+
+    
 
     # TODO: Start iperf, webservers, etc.
-    start_iperf(net)
-    start_ping(net)
-    # start_webserver(net)
+    iperf_proc = Process(target = start_iperf, args = (net,))
+    ping_proc = Process(target = start_ping, args = (net,))
+    iperf_proc.start()
+    ping_proc.start()
+    start_webserver(net)
+    CLI(net)
+
+    
+
     # TODO: measure the time it takes to complete webpage transfer
     # from h1 to h2 (say) 3 times.  Hint: check what the following
     # command does: curl -o /dev/null -s -w %{time_total} google.com
     # Now use the curl command to fetch webpage from the webserver you
     # spawned on host h1 (not from google!)
-
+    
     # As a sanity check, before the time measurement, check whether the
     # webpage is transferred successfully by checking the response from curl
 
     # Hint: have a separate function to do this and you may find the
     # loop below useful.
+    results = []
+    h1 = net.get('h1')
+    h2 = net.get('h2')
     start_time = time()
     while True:
         # do the measurement (say) 3 times.
+        results.append(get_time_avg(net, h1, h2))
         sleep(5)
         now = time()
         delta = now - start_time
@@ -179,6 +212,14 @@ def bufferbloat():
     # TODO: compute average (and standard deviation) of the fetch
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
+
+    print("Writing results...")
+    f = open("./results.txt", "a")
+    f.write("for qsize %d: " % args.maxq)
+    f.write("average=%.3f \t" % mean(results))
+    f.write("std dev=%.3f \n" % stdev(results))
+    f.close()
+
 
     # Hint: The command below invokes a CLI which you can use to
     # debug.  It allows you to run arbitrary commands inside your

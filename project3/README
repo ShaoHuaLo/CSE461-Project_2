@@ -4,18 +4,22 @@ UWNetID:
 Name:
 UWNetID:
 
-Name:
-UWNetID:
+Name: Shao-Hua Lo
+UWNetID: shl0905
 
 Instructions to reproduce the results:
   TODO
 
 Answers to the questions:
 Part 2
-  1. TODO
-  2. TODO
-  3. TODO
-  4. TODO
+  1. for qsize 100: average=11.291  std dev=2.279
+  	 for qsize 20: average=3.463   std dev=0.402
+  2. As we can see, the average fetch time for first run with q =  20 is much shorter than the second run with q = 100. This is something to do with excess buffering, i.e BufferBload, mentioned in the acm-queue case study. In this case, overdone buffering will advertently defeat TCP’s congestion detection mechanism and cause high latency.
+  3. txqueuelen = 1000. When the queue is full, there will be 100 packets in the queue and each packet is of 1500 bytes MTU, which is 1500 * 100 * 8 bits in total. Therefore, the maximum time a packet would have to wait would be 
+1500 * 100 * 8 /  100 * 10^6 = 0.12s
+  4. From the observation of data in ping.txt for each qsize(20, 100), when qsize=100, the RTT is obviously larger than its counterpart when qsize=20. The average is 404.819 for qsize=100, and 237.092 for qsize=20. The RTT might be somewhat positive correlated with queue size.
+  5. The most straightforward way is to decrease the buffer size directly, which is the cause of bufferbloat after all. Another potential approach which is still under development is something to do with the queue management, for example, developing algorithms capable of telling good/bad queue etc. Or manufacturers make routers which allow more dynamics in the end-user buffer size.
+
 Part 3
   1. TODO
   2. TODO
