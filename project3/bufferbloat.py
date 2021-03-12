@@ -124,8 +124,8 @@ def start_ping(net):
     # i.e. ping ... > /path/to/ping.
     h1 = net.get('h1')
     h2 = net.get('h2')
-    popen = h1.popen('ping -c 10 -i 0.1 %s > %s/ping.txt' % (h2.IP(), args.dir), shell = True)
-    popen.communicate()
+    popen = h1.popen('ping -i 0.1 -t %d %s> %s/ping.txt' % (args.time, h2.IP(), args.dir), shell = True)
+    return [popen]
 
 
 def start_webserver(net):
@@ -175,12 +175,9 @@ def bufferbloat():
     
 
     # TODO: Start iperf, webservers, etc.
-    iperf_proc = Process(target = start_iperf, args = (net,))
-    ping_proc = Process(target = start_ping, args = (net,))
-    iperf_proc.start()
-    ping_proc.start()
+    start_iperf(net)
     start_webserver(net)
-    CLI(net)
+    start_ping(net)
 
     
 

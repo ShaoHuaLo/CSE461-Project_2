@@ -1,8 +1,8 @@
-Name:
-UWNetID:
+Name: Arthur Beyer
+UWNetID: abeyer99 
 
-Name:
-UWNetID:
+Name: Michael Eizaguirre
+UWNetID: eiza21
 
 Name: Shao-Hua Lo
 UWNetID: shl0905
@@ -13,14 +13,19 @@ Instructions to reproduce the results:
 Answers to the questions:
 Part 2
   1. for qsize 100: average=11.291  std dev=2.279
-  	 for qsize 20: average=3.463   std dev=0.402
-  2. As we can see, the average fetch time for first run with q =  20 is much shorter than the second run with q = 100. This is something to do with excess buffering, i.e BufferBload, mentioned in the acm-queue case study. In this case, overdone buffering will advertently defeat TCP’s congestion detection mechanism and cause high latency.
+     for qsize 20: average=3.463   std dev=0.402
+  2. As we can see, the average fetch time for first run with q =  20 is much shorter than the second run with q = 100. 
+  This is something to do with excess buffering, i.e BufferBloat, mentioned in the acm-queue case study. 
+  In this case, overdone buffering will advertently defeat TCP’s congestion detection mechanism and cause high latency.
   3. txqueuelen = 1000. When the queue is full, there will be 100 packets in the queue and each packet is of 1500 bytes MTU, which is 1500 * 100 * 8 bits in total. Therefore, the maximum time a packet would have to wait would be 
 1500 * 100 * 8 /  100 * 10^6 = 0.12s
   4. From the observation of data in ping.txt for each qsize(20, 100), when qsize=100, the RTT is obviously larger than its counterpart when qsize=20. The average is 404.819 for qsize=100, and 237.092 for qsize=20. The RTT might be somewhat positive correlated with queue size.
   5. The most straightforward way is to decrease the buffer size directly, which is the cause of bufferbloat after all. Another potential approach which is still under development is something to do with the queue management, for example, developing algorithms capable of telling good/bad queue etc. Or manufacturers make routers which allow more dynamics in the end-user buffer size.
 
 Part 3
-  1. TODO
-  2. TODO
-  3. TODO
+  1. for qsize 100: average=1.853   std dev=0.086 
+     for qsize 20: average=2.366  std dev=0.712 
+  2. qsize of 100 gives a lower latency then that of qsize = 20. This is the opposite of what happened in part 2.
+  3. For queue size of 20, both graphs have the number of packets reach 20 many times. TCP BBR works better than TCP Reno because it stays within the optimal sending rate for longer before probing eventually reaching the queue limit then returning back to the optimal rate, while in TCP Reno after ss it is always probing until it notices a packet drop, this will result in BBR working better 
+     than Reno. For queue size of 100 TCP Reno works exactly the same as it did for the queue size of 20, the main difference is that with BBR we are able to converge on the optimal packets sending rate before the queue gets full and drops a packet, BBR will then probe and can notice that it needs to decrease before dropping any packets. This results in BBR being a lot more efficient than Reno. 
+  4. As long as the queue size is large enough that BBR is able to find the optimal rate without filling the queue and losing packets we have solved the bufferbloat problem.
